@@ -1,0 +1,3 @@
+[submodule "arm-control/pycarm"]
+	path = arm-control/pycarm
+	url = git@github.com:cvte-robotics/pycarm.git
