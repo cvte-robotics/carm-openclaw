@@ -1,19 +1,235 @@
 # OpenClaw 机械臂控制 Skill
 
-这个仓库用于分发 OpenClaw 的机械臂控制 Skill，面向希望通过 OpenClaw 调用 Python SDK 控制机械臂的用户。
+这个仓库用于分发 **OpenClaw** 的机械臂控制 Skill，面向希望通过 **OpenClaw** 调用 **Python SDK** 控制机械臂的用户。
 
-仓库中的 `arm-control/pycarm` 以 Git submodule 方式管理：
-- `pycarm` 仓库: [https://github.com/cvte-robotics/pycarm](https://github.com/cvte-robotics/pycarm)
-- OpenClaw Skill 仓库: [https://github.com/cvte-robotics/openclaw](https://github.com/cvte-robotics/openclaw)
+仓库中的 `arm-control/pycarm` 以 **Git submodule** 方式管理：
+- **pycarm** 仓库: [https://github.com/cvte-robotics/pycarm](https://github.com/cvte-robotics/pycarm)
+- **OpenClaw Skill** 仓库: [https://github.com/cvte-robotics/openclaw](https://github.com/cvte-robotics/openclaw)
 
 这意味着：
 - 在源码仓库里，`pycarm` 是 `arm-control/pycarm` 下的 submodule
 - 在用户安装后的 skill 目录里，实际使用的是 `pycarm/` 这一份 SDK
 - 机械臂控制默认依赖 skill 自带的 `pycarm`，而不是用户 Home 目录中的外部缓存副本
 
-## 1. 安装和配置 OpenClaw
+## 1. 安装和配置 OpenClaw（Linux为例）
 
-请参考 [OpenClaw 安装指南](https://docs.openclaw.ai/zh-CN/start/getting-started) 完成安装和基础配置。
+### 1.1 配置 API Key（MiniMax 为例）
+**申请步骤：**
+1. 访问 [https://platform.minimaxi.com/subscribe/coding-plan](https://platform.minimaxi.com/subscribe/coding-plan)
+2. 注册/登录账号
+3. 完成实名认证（需要身份证）
+4. 订阅 Coding Plan
+5. 进入 "API 管理" 页面
+6. 创建 API Key 并复制
+
+### 1.2 配置安装环境
+**检查 Node.js 版本**  
+打开你的终端（Terminal），输入：
+```bash
+node --version
+```
+
+**期望看到的结果：**  
+v22.x.x
+
+**判断标准：**
+- ✅ 版本 >= v22：可以继续
+- ❌ 版本 < v22：需要升级
+- ❌ 提示 "command not found"：需要安装
+
+**如果 Node.js 不符合要求**  
+**Ubuntu/Debian：**
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+**CentOS/RHEL/Fedora：**
+```bash
+sudo dnf install nodejs
+```
+
+### 1.3 安装 OpenClaw
+**安装命令：**
+```bash
+npm install -g openclaw@latest
+```
+
+**验证安装成功：**
+```bash
+openclaw --version
+```
+
+**期望看到类似输出：**
+```
+2026.2.17
+```
+
+❌ **如果提示 "command not found"**
+
+**可能原因：** npm 全局路径未加入系统 PATH
+
+**解决方法：**
+1. 重启终端
+2. 如果还不行，检查 npm 全局路径：`npm prefix -g`
+3. 把返回的路径加入 PATH 环境变量
+
+### 1.4 运行配置向导
+安装完成后，运行初始化向导：
+```bash
+openclaw onboard --install-daemon
+```
+
+启动向导后，通常会先看到：
+```
+? I understand this is powerful and inherently risky. Continue?
+❯ Yes
+  No
+```
+这里选 **Yes** 继续。
+
+如果你之前装过 OpenClaw，还会看到：
+```
+Existing config detected
+...
+? Config handling
+❯ Use existing values
+  Update values
+  Reset
+```
+**怎么选：**
+- **首次安装：** 通常不会出现这一段，直接进入下一步。
+- **复装/换模型：** 选 **Update values**（推荐，保留其余稳定配置）。
+- **完全重来：** 选 **Reset**（谨慎）。
+
+**向导第二步：选择模式（Onboarding mode）**  
+向导会问你：
+```
+? Onboarding mode
+❯ QuickStart - Minimal setup, get running fast
+  Manual - Full control over all settings
+```
+选 **QuickStart**
+
+**向导第三步：先选模型厂商（Provider）**  
+向导会提示你选择模型提供商：
+```
+? Which model provider would you like to use?
+  OpenAI
+  Anthropic
+  KIMI
+❯ MiniMax
+  GLM
+  Other (custom endpoint)
+```
+选择**minimax** 
+
+**向导第四步：再选鉴权方式（Auth method，容易漏）**  
+在你选完厂商后，通常不会立刻要 Key，而是先进入该厂商的鉴权方式选择。
+
+常见会看到类似：
+```
+? <Provider> auth method
+  Coding Plan / OAuth
+❯ API Key
+```
+**建议：** 选择 **API Key**
+
+- **MiniMax：** 优先 MiniMax API key（CN）路径
+
+**向导第五步：输入 API Key 并选模型**  
+选择 MiniMax
+```
+? Enter your MiniMax API Key: [粘贴你的 Key]
+? Select model: ❯ MiniMax-M2.7
+```
+
+**向导第六步：配置 Channel（先 Skip！）**  
+在 QuickStart 路径下，向导会直接进入渠道单选列表：
+
+```
+? Select channel (QuickStart)
+  ...
+  Feishu/Lark (飞书)
+  ...
+❯ Skip for now (You can add channels later via `openclaw channels add`)
+```
+
+**建议：** 直接选 **Skip for now**。
+
+**向导第七步：配置 Search Provider**  
+```
+Search provider
+│  ○ Brave Search
+│  ○ DuckDuckGo Search (experimental)
+│  ○ Exa Search
+│  ○ Firecrawl Search
+│  ○ Gemini (Google Search)
+│  ○ Grok (xAI)
+│  ○ Kimi (Moonshot)
+│  ○ Perplexity Search
+│  ○ Tavily Search
+│  ● Skip for now (Configure later with openclaw configure --section web)
+```
+
+**建议：** 直接选 **Skip for now**。
+
+**向导第八步：配置 Skills**  
+Channel 之后，向导会进入 Skills 检查与可选安装：
+
+```
+? Configure skills now? (recommended)
+  Yes
+❯ No
+```
+
+**建议：** 选 **NO**
+
+**向导第九步：配置 Hooks**  
+Skills 后会进入 Hooks 配置：
+
+```
+◆  Enable hooks?
+│  ◻ Skip for now
+│  ◻ 🚀 boot-md
+│  ◻ 📎 bootstrap-extra-files
+│  ◻ 📝 command-logger
+│  ◻ 💾 session-memory
+│  ◻ 🧠 self-improvement
+```
+
+**建议：** 空格 + enter 直接跳过
+
+向导第十步：选择 Hatch 方式（关键）
+在收尾阶段，向导会给你一个启动入口选择：
+
+```
+? How do you want to hatch your bot?
+  Hatch in TUI (recommended)
+❯ Open the Web UI
+  Do this later
+```
+
+选择 **Open the Web UI**
+
+### 1.5 首次对话和 Bootstrap（真正初始化）
+**onboard** 完成后，建议先在 **TUI** 里完成第一轮 **bootstrap** 对话。
+
+官方流程会把它当成"把 Agent 变成你的 Agent"的关键动作（源码里有 **Wake up, my friend!** 引导）。
+
+这一步建议你主动讲清楚下面 **5 件事**：
+
+1. **你是谁**：怎么称呼你、你的时区和工作语言。
+2. **你要它扮演什么角色**：比如"我的技术写作助手"。
+3. **你平时的工作场景**：常用工具、文件目录、沟通方式（飞书/邮件等）。
+4. **你的偏好**：回答风格、长度、是否先给结论。
+5. **你的边界**：哪些操作必须先确认、哪些内容不要碰。
+
+这一步做得越清楚，后续它越像"**你自己的实例**"，而不是"一个通用聊天机器人"。
+
+如果有疑问请参考下面两个链接：
+
+ [OpenClaw官方安装指南](https://docs.openclaw.ai/zh-CN/start/getting-started) 
 
 如果官方安装指南描述不够清晰，也可以参考此[教程](https://mp.weixin.qq.com/s/0Xq9XOfTjnQYwqXOVe9rZg?sessionid=1774408441&scene=231&clicktime=1774408629&enterid=1774408629&subscene=10000&ascene=3&fasttmpl_type=0&fasttmpl_fullversion=8184212-zh_CN-zip&fasttmpl_flag=0&realreporttime=1774408629739&devicetype=android-36&version=2800455b&nettype=ctnet&abtest_cookie=AAACAA==&lang=zh_CN&session_us=gh_d0f76b973041&countrycode=CN&exportkey=n_ChQIAhIQbThkYFnG2CTPmIDLxXM0FRLxAQIE97dBBAEAAAAAAHHkCVIG6FIAAAAOpnltbLcz9gKNyK89dVj0eVSdICOymYoHmG2nPozJiTJHZUcRw6J9tI4QtGV5/2AR86nprBdaPjYJTJzAU2GptXAYUCF78rb3mRr2hxKf3NB2QCzB83bw5iw+fvKEzl0/ktjIfqu3wW2RyRIFwqnPP6IajTOB5tEFKnWMkRYnPppZVQCn3/vhHFBrE6l3YSxsj980n+eyNoTWghzoK/KJycQ3VySizQei7iyMiQFeHJ/kwhVpXkJ0KqElqosjhk/t7H3CC2IClIFGqRdLJw9FonVodVsFYQV4cSA=&pass_ticket=5RNP3Cp4btkJqq+LcEQas8kvjdVuOH/pxZxI9+xlVzHt/O1AEURHuz5F+/Vvynho&wx_header=3&color_scheme=light)。
 
