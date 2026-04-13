@@ -1,5 +1,9 @@
 # OpenClaw 机械臂控制 Skill
 
+- 作者：刘艺
+- 邮箱：i_liuyi@cvte.com
+- 修改时间：2026年3月26日
+
 这个仓库用于分发 **OpenClaw** 的机械臂控制 Skill，面向希望通过 **OpenClaw** 调用 **Python SDK** 控制机械臂的用户。
 
 仓库中的 `arm-control/pycarm` 以 **Git submodule** 方式管理：
